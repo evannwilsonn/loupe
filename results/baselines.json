@@ -1,0 +1,5 @@
+{
+  "majority": {"valid": {"accuracy": 0.1000, "low": 0.0920, "high": 0.1086}, "test": {"accuracy": 0.1000, "low": 0.0943, "high": 0.1060}},
+  "knn": {"validByK": {"1": 0.3446, "3": 0.3504, "5": 0.3426, "10": 0.3420, "20": 0.3262}, "k": 3, "valid": {"accuracy": 0.3504, "low": 0.3373, "high": 0.3637}, "test": {"accuracy": 0.3485, "low": 0.3392, "high": 0.3579}, "seconds": 18.6},
+  "softmax": {"epochs": 20, "validByLr": {"0.0003": 0.4056, "0.001": 0.3906, "0.003": 0.3638, "0.01": 0.3256}, "lr": 0.0003, "valid": {"accuracy": 0.4056, "low": 0.3921, "high": 0.4193}, "test": {"accuracy": 0.3989, "low": 0.3893, "high": 0.4085}, "seconds": 13.6}
+}

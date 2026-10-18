@@ -1,0 +1,8 @@
+{
+  "images": 1000,
+  "sameClass": 1000,
+  "maxLogitDifference": 0.01685,
+  "accuracy": 0.912,
+  "msPerImage": 90,
+  "weights": "float16"
+}

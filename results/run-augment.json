@@ -1,0 +1,21 @@
+{
+  "name": "augment", "epochs": 15, "augment": true, "parameters": 288746, "batch": 128, "peakLr": 0.1, "weightDecay": 0.0005, "minutes": 18.2,
+  "valid": {"accuracy": 0.8864, "low": 0.8773, "high": 0.8949},
+  "curve": [
+    {"epoch": 1, "trainLoss": 1.4267, "trainAccuracy": 0.4804, "validAccuracy": 0.5268, "seconds": 70.4},
+    {"epoch": 2, "trainLoss": 0.9703, "trainAccuracy": 0.6574, "validAccuracy": 0.5978, "seconds": 72.0},
+    {"epoch": 3, "trainLoss": 0.7743, "trainAccuracy": 0.7300, "validAccuracy": 0.7084, "seconds": 78.1},
+    {"epoch": 4, "trainLoss": 0.6662, "trainAccuracy": 0.7677, "validAccuracy": 0.6930, "seconds": 73.2},
+    {"epoch": 5, "trainLoss": 0.6114, "trainAccuracy": 0.7898, "validAccuracy": 0.6972, "seconds": 74.3},
+    {"epoch": 6, "trainLoss": 0.5632, "trainAccuracy": 0.8054, "validAccuracy": 0.7482, "seconds": 72.5},
+    {"epoch": 7, "trainLoss": 0.5258, "trainAccuracy": 0.8191, "validAccuracy": 0.7500, "seconds": 71.3},
+    {"epoch": 8, "trainLoss": 0.4871, "trainAccuracy": 0.8327, "validAccuracy": 0.7628, "seconds": 71.0},
+    {"epoch": 9, "trainLoss": 0.4525, "trainAccuracy": 0.8446, "validAccuracy": 0.8252, "seconds": 71.1},
+    {"epoch": 10, "trainLoss": 0.4138, "trainAccuracy": 0.8578, "validAccuracy": 0.8390, "seconds": 71.2},
+    {"epoch": 11, "trainLoss": 0.3707, "trainAccuracy": 0.8717, "validAccuracy": 0.8500, "seconds": 71.0},
+    {"epoch": 12, "trainLoss": 0.3333, "trainAccuracy": 0.8842, "validAccuracy": 0.8670, "seconds": 72.8},
+    {"epoch": 13, "trainLoss": 0.2951, "trainAccuracy": 0.8995, "validAccuracy": 0.8778, "seconds": 73.6},
+    {"epoch": 14, "trainLoss": 0.2662, "trainAccuracy": 0.9097, "validAccuracy": 0.8862, "seconds": 76.2},
+    {"epoch": 15, "trainLoss": 0.2525, "trainAccuracy": 0.9154, "validAccuracy": 0.8864, "seconds": 72.5}
+  ]
+}

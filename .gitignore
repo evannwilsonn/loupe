@@ -1,0 +1,7 @@
+build/
+third_party/
+data/cifar-10-batches-bin/
+data/*.tgz
+models/*.pt
+models/*.bin
+.impeccable/
