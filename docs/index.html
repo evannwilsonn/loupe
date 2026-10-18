@@ -3,220 +3,211 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Loupe image classifier</title>
-<meta name="description" content="A small convolutional network for CIFAR-10, trained in C++ with LibTorch on two CPU cores, running in your browser.">
+<title>Loupe image sorter</title>
+<meta name="description" content="A small convolutional network for CIFAR-10, trained in C++ with LibTorch on two CPU cores, sorting photos into ten pigeonholes in your browser.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Hanken+Grotesk:wght@400;500;600&family=Permanent+Marker&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Overpass+Mono:wght@400;600;700&family=Rokkitt:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --table:#eef0ec;--table-2:#e3e6e1;--film:#17181a;--film-2:#26282b;--edge:#e3a33b;
-  --ink:#1c1e1d;--soft:#454a47;--faint:#5f6561;--rule:#c9cdc7;
-  --grease:#d0261c;--grease-ink:#b51f16;
-  --c-plain:#c2410c;--c-aug:#1769aa;--heat:23,105,170;
-  --display:"Gloock",Georgia,serif;--text:"Hanken Grotesk",system-ui,sans-serif;
-  --mono:"Share Tech Mono",ui-monospace,monospace;--hand:"Permanent Marker","Comic Sans MS",cursive;
+  --wall:#e9e1d0;--oak:#a8743f;--oak-dark:#7c5228;--oak-deep:#5a3a1c;--slot:#3a2614;
+  --brass:#c9a24a;--brass-ink:#3b2c0e;--slip:#f8f3e6;--slip-rule:#ddd2b9;
+  --ink:#23201b;--soft:#4b4539;--faint:#665e4f;--rule:#cdbf9f;
+  --tag:#c22f1f;--tag-ink:#a8291b;
+  --c-plain:#c2410c;--c-aug:#1769aa;
+  --slab:"Rokkitt",Georgia,serif;--text:"Overpass",system-ui,sans-serif;--mono:"Overpass Mono",ui-monospace,monospace;
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --table:#17110f;--table-2:#211816;--film:#0b0807;--film-2:#1c1412;--edge:#c9792c;
-  --ink:#f1d7c4;--soft:#d6b3a0;--faint:#b48f7d;--rule:#3d2c27;
-  --grease:#ff5a3c;--grease-ink:#ff7a5f;
-  --c-plain:#e0662d;--c-aug:#4b97de;--heat:75,151,222;color-scheme:dark}}
+  --wall:#18130f;--oak:#6e4724;--oak-dark:#523418;--oak-deep:#3c2510;--slot:#140d07;
+  --brass:#b8913c;--brass-ink:#2a1f08;--slip:#211a15;--slip-rule:#3a2f26;
+  --ink:#eee2cb;--soft:#d1c2a5;--faint:#ab9c80;--rule:#3f342a;
+  --tag:#ff5d45;--tag-ink:#ff7b66;--c-plain:#e0662d;--c-aug:#4b97de;color-scheme:dark}}
 :root[data-theme="dark"]{
-  --table:#17110f;--table-2:#211816;--film:#0b0807;--film-2:#1c1412;--edge:#c9792c;
-  --ink:#f1d7c4;--soft:#d6b3a0;--faint:#b48f7d;--rule:#3d2c27;
-  --grease:#ff5a3c;--grease-ink:#ff7a5f;
-  --c-plain:#e0662d;--c-aug:#4b97de;--heat:75,151,222;color-scheme:dark}
+  --wall:#18130f;--oak:#6e4724;--oak-dark:#523418;--oak-deep:#3c2510;--slot:#140d07;
+  --brass:#b8913c;--brass-ink:#2a1f08;--slip:#211a15;--slip-rule:#3a2f26;
+  --ink:#eee2cb;--soft:#d1c2a5;--faint:#ab9c80;--rule:#3f342a;
+  --tag:#ff5d45;--tag-ink:#ff7b66;--c-plain:#e0662d;--c-aug:#4b97de;color-scheme:dark}
 
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--table);color:var(--ink);font:400 16px/1.6 var(--text)}
+body{margin:0;background:var(--wall);color:var(--ink);font:400 16px/1.6 var(--text)}
 a{color:inherit;text-underline-offset:3px}
-:focus-visible{outline:2px solid var(--grease);outline-offset:3px}
-.wrap{max-width:1240px;margin:0 auto;padding:0 32px}
-.mono{font-family:var(--mono)}
+:focus-visible{outline:2px solid var(--tag);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
 
-/* Film edge across the top */
-.edge{background:var(--film);color:var(--edge);font:400 13px/1 var(--mono);letter-spacing:.05em}
-.edge .holes{height:16px;display:flex;gap:14px;padding:4px 10px;overflow:hidden}
-.edge .holes i{flex:0 0 18px;height:8px;border-radius:2px;background:var(--table)}
-.edge .print{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:6px 32px;flex-wrap:wrap}
-.edge .print nav{display:flex;gap:18px}
-.edge a,.edge button{color:var(--edge);background:none;border:0;font:inherit;cursor:pointer;padding:4px 0;text-decoration:none;border-bottom:1px solid currentColor}
+/* Top rail */
+.rail{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 0;font:600 13px var(--mono);color:var(--soft);flex-wrap:wrap}
+.rail nav{display:flex;gap:18px}
+.rail a,.rail button{background:none;border:0;padding:3px 0;font:inherit;color:inherit;cursor:pointer;text-decoration:none;border-bottom:1px solid currentColor}
 
-/* Intro */
-.intro{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px;align-items:end;padding:52px 0 36px}
-h1{font:400 clamp(52px,7.5vw,104px)/.9 var(--display);margin:0;letter-spacing:-.01em}
-h1 em{font-style:normal;color:var(--grease-ink)}
-.lede{margin:0;color:var(--soft);font-size:17px;max-width:36em;text-wrap:pretty}
-.notes-top{display:flex;gap:28px;flex-wrap:wrap;margin-top:22px}
-.notes-top div{font:400 15px/1.3 var(--text);color:var(--soft)}
-.notes-top b{display:block;font:400 34px/1.1 var(--hand);color:var(--grease-ink);transform:rotate(-2deg);transform-origin:left}
+/* Masthead: a brass plate */
+.mast{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:44px;align-items:end;padding:26px 0 34px}
+h1{font:800 clamp(52px,7.2vw,96px)/.9 var(--slab);margin:0;letter-spacing:-.015em}
+h1 span{color:var(--tag-ink)}
+.lede{margin:0;color:var(--soft);font-size:17px;text-wrap:pretty}
 
-/* Light table: sheet + loupe */
-.bench{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:36px;align-items:start}
-.sheet{background:var(--film);padding:12px 0;border-radius:2px}
-.strip{position:relative;padding:12px 0 0;border-bottom:2px solid var(--film-2)}
-.strip:last-child{border-bottom:0}
-.strip .tag{display:flex;justify-content:space-between;padding:0 14px 6px;color:var(--edge);font:400 13px/1 var(--mono);letter-spacing:.06em}
-.strip .tag b{font-weight:400;text-transform:uppercase}
-.frames{display:grid;grid-template-columns:repeat(12,minmax(44px,1fr));gap:12px 10px;padding:4px 14px 22px;overflow-x:auto}
-.frame{position:relative;aspect-ratio:1;border:0;padding:0;background:#000;cursor:pointer;display:block}
-.frame canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
-.frame svg{position:absolute;inset:-9%;width:118%;height:118%;pointer-events:none;overflow:visible}
-.frame svg path{fill:none;stroke:var(--grease);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-.frame .guess{position:absolute;left:50%;bottom:-19px;transform:translateX(-50%) rotate(-4deg);font:400 12px/1 var(--hand);color:var(--grease);white-space:nowrap;pointer-events:none}
-.frame[aria-pressed="true"]{outline:2px solid var(--edge);outline-offset:2px}
-.frame:hover{filter:brightness(1.12)}
+/* Intake: tray + reading slip */
+.intake{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;align-items:stretch;margin-bottom:28px}
+.tray{background:var(--oak-dark);padding:16px 18px 18px;border-radius:3px}
+.tray h2,.slipcard h2{font:800 22px/1.1 var(--slab);margin:0 0 4px}
+.tray h2{color:#f6ead2}
+.tray p{margin:0 0 12px;color:#e3d2b0;font-size:14px}
+.pile{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}
+.photo{position:relative;border:0;padding:0;background:#000;aspect-ratio:1;cursor:pointer;display:block;box-shadow:0 0 0 2px #f6ead2}
+.photo canvas{width:100%;height:100%;display:block;image-rendering:pixelated}
+.photo:hover{transform:translateY(-2px)}
+.photo[aria-pressed="true"]{box-shadow:0 0 0 3px var(--brass)}
+.post{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
+.post label{cursor:pointer;background:var(--brass);color:var(--brass-ink);font:800 16px var(--slab);padding:9px 16px;border-radius:2px}
+.post label:hover{filter:brightness(1.08)}
+.post input{position:absolute;opacity:0;width:1px;height:1px}
+.post span{color:#e3d2b0;font-size:13.5px}
 
-.loupe{position:sticky;top:20px}
-.lens{position:relative;width:260px;height:260px;margin:0 auto 18px;border-radius:50%;background:var(--film);box-shadow:0 0 0 10px var(--film-2),0 0 0 12px var(--rule),0 18px 30px -12px rgba(0,0,0,.45);overflow:hidden}
-.lens canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
-.read h2{font:400 32px/1.05 var(--display);margin:0 0 4px}
-.read h2 em{font-style:normal;color:var(--grease-ink)}
-.read .meta{font:400 14px var(--mono);color:var(--faint);margin:0 0 12px}
-.probs{display:grid;gap:5px}
-.prob{display:grid;grid-template-columns:86px minmax(0,1fr) 52px;gap:10px;align-items:center;font-size:14px}
-.prob .bar{height:10px;background:var(--table-2);position:relative}
-.prob .bar i{position:absolute;inset:0 auto 0 0;background:var(--soft)}
-.prob.top .bar i{background:var(--grease)}
-.prob .v{font:400 14px var(--mono);text-align:right}
-.develop{margin-top:20px;border-top:1px solid var(--rule);padding-top:14px}
-.develop label{display:inline-block;cursor:pointer;font:600 15px var(--text);border-bottom:2px solid var(--grease);padding:2px 0}
-.develop label:hover{color:var(--grease-ink)}
-.develop input{position:absolute;opacity:0;width:1px;height:1px}
-.develop p{margin:8px 0 0;font-size:14px;color:var(--soft)}
-.status{font:400 13px var(--mono);color:var(--faint);margin:10px 0 0}
+.slipcard{background:var(--slip);border:1px solid var(--rule);padding:16px 18px;display:grid;grid-template-columns:132px minmax(0,1fr);gap:16px;align-content:start;position:relative}
+.slipcard::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:8px;background:radial-gradient(circle at 6px 8px,var(--wall) 4px,transparent 4.5px) 0 0/12px 8px repeat-x}
+.slipcard .big{width:132px;height:132px;background:#000}
+.slipcard .big canvas{width:100%;height:100%;image-rendering:pixelated;display:block}
+.slipcard h2 span{color:var(--tag-ink)}
+.slipcard .meta{font:400 12.5px/1.4 var(--mono);color:var(--faint);margin:0 0 8px}
+.lines{display:grid;gap:3px;font:400 13px var(--mono)}
+.line{display:grid;grid-template-columns:104px minmax(0,1fr) 52px;gap:8px;align-items:center}
+.line .bar{height:8px;background:var(--slip-rule);position:relative}
+.line .bar i{position:absolute;inset:0 auto 0 0;background:var(--soft)}
+.line.first .bar i{background:var(--tag)}
+.line .v{text-align:right}
+.status{grid-column:1/-1;font:400 12.5px var(--mono);color:var(--faint);margin:2px 0 0}
 
-/* Results */
-section{padding:84px 0 0}
-.head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:48px;align-items:end;border-bottom:1px solid var(--ink);padding-bottom:12px;margin-bottom:26px}
-.head h2{font:400 clamp(40px,5.5vw,68px)/.95 var(--display);margin:0}
-.head h2 em{font-style:normal;color:var(--grease-ink)}
+/* The cabinet */
+.cabinet{background:var(--oak);padding:14px;border-radius:4px;box-shadow:inset 0 0 0 6px var(--oak-dark)}
+.cubbies{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.cubby{background:var(--slot);border:4px solid var(--oak-deep);border-top-width:8px;padding:10px 8px 8px;min-height:230px;display:flex;flex-direction:column;gap:8px;position:relative;transition:box-shadow .3s}
+.cubby.hit{box-shadow:0 0 0 3px var(--brass)}
+.holder{background:var(--brass);color:var(--brass-ink);padding:4px 8px 3px;border-radius:2px;display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.holder b{font:800 17px/1.1 var(--slab);text-transform:capitalize}
+.holder{flex-wrap:wrap}
+.holder span{font:600 11.5px var(--mono);white-space:nowrap}
+.inside{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;align-content:start}
+.inside .photo{box-shadow:none}
+.inside .photo.wrong{outline:2px solid var(--tag);outline-offset:-2px}
+.inside .photo .tagged{position:absolute;left:-2px;bottom:-6px;background:var(--tag);color:#fff;font:700 9.5px/1 var(--mono);padding:2px 3px;text-transform:uppercase;letter-spacing:.02em;pointer-events:none}
+.inside .photo.yours{box-shadow:0 0 0 2px var(--brass)}
+.cubby .tally{margin-top:auto;font:400 12px var(--mono);color:#cdb894}
+.flyer{position:fixed;z-index:30;pointer-events:none;image-rendering:pixelated;transition:transform .7s cubic-bezier(.22,1,.36,1),opacity .7s}
+
+/* Report */
+section{padding:80px 0 0}
+.head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:44px;align-items:end;margin-bottom:24px}
+.head h2{font:800 clamp(36px,4.8vw,58px)/.95 var(--slab);margin:0}
+.head h2 span{color:var(--tag-ink)}
 .head p{margin:0;color:var(--soft);text-wrap:pretty}
 
-.ladder{display:grid;gap:8px}
-.step{display:grid;grid-template-columns:230px minmax(0,1fr) 120px;gap:16px;align-items:center}
-.step .name{font-size:15px;line-height:1.3}
-.step .name small{display:block;color:var(--faint);font-size:13px}
-.step .band{height:30px;position:relative;background:var(--table-2)}
-.step .band i{position:absolute;inset:0 auto 0 0;background:var(--soft)}
-.step .band b{position:absolute;top:50%;height:2px;margin-top:-1px;background:var(--ink);opacity:.55}
-.step.best .band i{background:var(--grease)}
-.step .acc{font:400 22px var(--mono);text-align:right}
-.step .acc small{display:block;font-size:12px;color:var(--faint)}
-.scale{display:grid;grid-template-columns:230px minmax(0,1fr) 120px;gap:16px;margin-top:6px}
-.scale div{position:relative;height:18px;font:400 12px var(--mono);color:var(--faint)}
-.scale span{position:absolute;transform:translateX(-50%)}
+.counters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.counter{background:var(--slip);border:1px solid var(--rule);padding:14px 16px}
+.counter.best{border-color:var(--tag);box-shadow:inset 0 0 0 1px var(--tag)}
+.counter .what{font:800 18px/1.2 var(--slab)}
+.counter .how{font-size:13.5px;color:var(--faint);margin-bottom:10px}
+.wheels{display:flex;gap:3px;align-items:flex-end}
+.wheel{width:30px;height:44px;background:var(--ink);color:var(--slip);font:700 28px/44px var(--mono);text-align:center;overflow:hidden;border-radius:2px}
+.wheel span{display:block;transition:transform 1.1s cubic-bezier(.22,1,.36,1)}
+.wheels .dot{font:700 28px/1 var(--mono);padding:0 1px 4px}
+.wheels .pc{font:700 20px/1 var(--mono);padding:0 0 6px 3px}
+.counter .ci{font:400 12.5px var(--mono);color:var(--faint);margin-top:8px}
 
-.two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;align-items:start;margin-top:56px}
-.two h3,.trio h3{font:400 30px/1.1 var(--display);margin:0 0 8px}
+.two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:44px;align-items:start;margin-top:56px}
+.two h3,.trio h3{font:800 24px/1.15 var(--slab);margin:0 0 8px}
 .two p,.trio p{margin:0 0 12px;color:var(--soft);text-wrap:pretty}
-.legend{display:flex;gap:18px;flex-wrap:wrap;font:400 13px var(--mono);color:var(--soft);margin:4px 0 8px}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font:400 13px var(--mono);color:var(--soft);margin:2px 0 8px}
 .legend span{display:inline-flex;align-items:center;gap:7px}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .chart .grid line{stroke:var(--rule)}
 .chart text{font:400 13px var(--mono);fill:var(--faint)}
-.chart .lbl{font-size:14px}
 .chart .hit{fill:transparent;cursor:crosshair}
-.tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--table);font:400 13px/1.45 var(--mono);padding:8px 10px;max-width:280px;opacity:0;transition:opacity .12s;white-space:pre-line}
+.tip{position:fixed;z-index:40;pointer-events:none;background:var(--ink);color:var(--wall);font:400 13px/1.45 var(--mono);padding:8px 10px;max-width:280px;opacity:0;transition:opacity .12s;white-space:pre-line}
 
-.matrix{display:grid;grid-template-columns:92px repeat(10,minmax(0,1fr));gap:2px;font:400 12px var(--mono)}
-.matrix .lab{color:var(--faint);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:12.5px}
-.matrix .top{color:var(--faint);writing-mode:vertical-rl;transform:rotate(180deg);text-align:left;padding:4px 0;height:84px;font-size:12.5px}
-.matrix .cell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:11.5px}
-.matrix .cell.dark{color:#fff}
-.axisnote{font:400 13px var(--mono);color:var(--faint);margin:8px 0 0}
+.misfiled{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink)}
+.misfiled li{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--rule)}
+.misfiled b{font:700 22px var(--mono);color:var(--tag-ink);text-align:right}
+.misfiled span{font:400 16px var(--text)}
+.misfiled em{font-style:normal;font-weight:700}
 
-.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:36px;margin-top:64px;border-top:1px solid var(--rule);padding-top:22px}
-pre{margin:8px 0 0;background:var(--film);color:var(--edge);font:400 13px/1.5 var(--mono);padding:12px 14px;overflow-x:auto;white-space:pre}
-details{margin-top:36px}
-summary{cursor:pointer;font:400 14px var(--mono);color:var(--soft)}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin-top:64px;border-top:2px solid var(--ink);padding-top:20px}
+pre{margin:8px 0 0;background:var(--slot);color:#e7d7b5;font:400 13px/1.5 var(--mono);padding:12px 14px;overflow-x:auto}
+details{margin-top:34px}
+summary{cursor:pointer;font:600 14px var(--mono);color:var(--soft)}
 .tablewrap{overflow-x:auto;margin-top:10px}
-table{border-collapse:collapse;width:100%;font:400 14px var(--mono)}
-th{text-align:right;color:var(--faint);font-weight:400;padding:6px 10px;border-bottom:1px solid var(--ink)}
-td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--rule)}
+table{border-collapse:collapse;width:100%;font:400 13.5px var(--mono)}
+th{text-align:right;color:var(--faint);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--ink)}
+td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule)}
 th:first-child,td:first-child{text-align:left}
 
-footer{margin-top:90px;background:var(--film);color:var(--edge);font:400 13px/1.6 var(--mono)}
-footer .in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:40px;padding:22px 32px 30px;max-width:1240px;margin:0 auto}
+footer{margin-top:84px;border-top:8px solid var(--oak-dark);padding:20px 0 40px;font-size:14px;color:var(--soft)}
+footer .wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:40px}
 footer p{margin:0 0 6px}
-footer a{color:var(--edge)}
 
 @media (max-width:1000px){
-  .bench{grid-template-columns:minmax(0,1fr)}
-  .loupe{position:static;display:grid;grid-template-columns:220px minmax(0,1fr);gap:24px;align-items:start}
-  .lens{width:200px;height:200px;margin:12px}
-  .two,.head,.intro{grid-template-columns:1fr;gap:20px}
-  .trio{grid-template-columns:1fr;gap:28px}
+  .mast,.intake,.two,.head{grid-template-columns:minmax(0,1fr);gap:20px}
+  .cubbies{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .counters{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .trio{grid-template-columns:1fr;gap:26px}
 }
-@media (max-width:640px){
+@media (max-width:600px){
   .wrap{padding:0 16px}
-  .edge .print{padding:6px 16px}
-  .frames{grid-template-columns:repeat(12,48px)}
-  .loupe{grid-template-columns:1fr}
-  .lens{margin:12px auto 18px}
-  .step,.scale{grid-template-columns:110px minmax(0,1fr) 76px;gap:10px}
-  .step .acc{font-size:17px}
-  .matrix{grid-template-columns:62px repeat(10,minmax(0,1fr));gap:1px}
-  .matrix .cell{font-size:9.5px}
-  .matrix .lab{font-size:11px}
-  .matrix .top{height:70px;font-size:11px}
-  footer .in{grid-template-columns:1fr;padding:20px 16px}
+  .pile{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .slipcard{grid-template-columns:96px minmax(0,1fr);gap:12px}
+  .slipcard .big{width:96px;height:96px}
+  .line{grid-template-columns:96px minmax(0,1fr) 48px}
+  .cubby{min-height:0}
+  .counters{grid-template-columns:1fr}
+  footer .wrap{grid-template-columns:1fr;gap:12px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<header class="edge">
-  <div class="holes" aria-hidden="true" id="holesTop"></div>
-  <div class="print">
-    <span>LOUPE ▸ 09 &nbsp; CIFAR-10 &nbsp; 32×32 &nbsp; LIBTORCH C++</span>
-    <nav><a href="https://github.com/evannwilsonn/loupe">source</a><button type="button" id="theme">safelight</button></nav>
-  </div>
-</header>
-
 <div class="wrap">
-  <div class="intro">
-    <div>
-      <h1>What's in <em>the frame?</em></h1>
-    </div>
-    <div>
-      <p class="lede">A small convolutional network, written and trained in C++ with LibTorch on two CPU cores, sorts 32-pixel photos into ten kinds: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck. Below is a contact sheet of test photos it never trained on, marked up the way a photographer would: circled when it's right, crossed out with its wrong guess when it isn't. Click any frame to look closer, or develop one of your own.</p>
-      <div class="notes-top">
-        <div><b id="tAcc">–</b>right on 10,000 test photos</div>
-        <div><b id="tParams">–</b>weights</div>
-        <div><b id="tMin">–</b>to train</div>
+  <div class="rail">
+    <span>LOUPE · No. 09 · CIFAR-10 · LibTorch C++</span>
+    <nav><a href="https://github.com/evannwilsonn/loupe">source</a><button type="button" id="theme">after hours</button></nav>
+  </div>
+
+  <div class="mast">
+    <h1>Ten boxes. <span>One guess.</span></h1>
+    <p class="lede">A small convolutional network, written and trained in C++ with LibTorch on two CPU cores, files 32-pixel photos into ten pigeonholes: airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck. It never saw these photos while training. Post one from the tray, or one of your own, and watch where it goes. Photos in the wrong box carry a red tag with what they really are.</p>
+  </div>
+
+  <div class="intake">
+    <div class="tray">
+      <h2>The out tray</h2>
+      <p>Twenty unsorted test photos. Pick one to post it.</p>
+      <div class="pile" id="pile"></div>
+      <div class="post">
+        <label for="file">Post your own photo</label>
+        <input type="file" id="file" accept="image/*">
+        <span>Cropped square, shrunk to 32×32, read in your browser. Nothing is uploaded.</span>
       </div>
+    </div>
+    <div class="slipcard" aria-live="polite">
+      <div class="big"><canvas id="big" width="32" height="32" aria-label="The photo being read, enlarged"></canvas></div>
+      <div>
+        <h2 id="slipTitle">Waiting for post</h2>
+        <p class="meta" id="slipMeta">Each of the 1,024 pixels shows as a square.</p>
+        <div class="lines" id="lines"></div>
+      </div>
+      <p class="status" id="status">Loading the network…</p>
     </div>
   </div>
 
-  <div class="bench">
-    <div class="sheet" id="sheet" aria-label="Contact sheet: twelve test photos of each kind"></div>
-    <aside class="loupe" aria-live="polite">
-      <div class="lens"><canvas id="lens" width="32" height="32" aria-label="The selected photo, enlarged"></canvas></div>
-      <div class="read">
-        <h2 id="readTitle">Pick a frame</h2>
-        <p class="meta" id="readMeta">Each of the 1,024 pixels is shown as a square.</p>
-        <div class="probs" id="probs"></div>
-        <div class="develop">
-          <label for="file">Develop your own photo</label>
-          <input type="file" id="file" accept="image/*">
-          <p>It is cropped to a square and shrunk to 32×32, the size the network learned on, then read in your browser. Nothing is uploaded.</p>
-        </div>
-        <p class="status" id="status">Loading the network…</p>
-      </div>
-    </aside>
+  <div class="cabinet" aria-label="The sorting cabinet: test photos filed by the network">
+    <div class="cubbies" id="cubbies"></div>
   </div>
 
-  <section aria-labelledby="h-strip">
+  <section aria-labelledby="h-tally">
     <div class="head">
-      <h2 id="h-strip">The <em>test strip</em></h2>
-      <p>Each method in order, scored on 5,000 training photos held back for choosing between them (500 of each kind). The test set was scored once, at the end. Lines show the 95% interval.</p>
+      <h2 id="h-tally">The day's <span>tally</span></h2>
+      <p>Share of 5,000 held-out photos filed correctly (500 of each kind, held back from training to choose between methods). The test set was scored once, at the end: <b id="testLine">–</b>.</p>
     </div>
-    <div class="ladder" id="ladder"></div>
-    <div class="scale" aria-hidden="true"><div></div><div id="scale"></div><div></div></div>
+    <div class="counters" id="counters"></div>
 
     <div class="two">
       <div>
@@ -228,43 +219,37 @@ footer a{color:var(--edge)}
         </div>
         <div class="chart" id="curves"></div>
       </div>
-      <div>
-        <p id="curveText"></p>
-        <p id="flipText"></p>
-      </div>
+      <div><p id="curveText"></p><p id="flipText"></p></div>
     </div>
 
     <div class="two">
       <div>
-        <h3>Proof sheet</h3>
-        <div class="matrix" id="matrix" role="img" aria-label="Confusion matrix of test predictions"></div>
-        <p class="axisnote">rows: what the photo is · columns: what the network said</p>
+        <h3>Misfiled most often</h3>
+        <ul class="misfiled" id="misfiled"></ul>
       </div>
-      <div>
-        <p id="matrixText"></p>
-        <div class="tablewrap"><table id="perClass"></table></div>
-      </div>
+      <div><p id="misText"></p></div>
     </div>
 
     <div class="trio">
-      <div><h3>Behind a server</h3><p>The same model runs in a small C++ HTTP server. Send it any PNG or JPEG:</p><pre>./build/serve --port 8080
+      <div><h3>Behind a counter</h3><p>The same model runs in a small C++ HTTP server. Post it any PNG or JPEG:</p><pre>./build/serve --port 8080
 curl --data-binary @cat.jpg \
   localhost:8080/classify</pre></div>
       <div><h3>In this page</h3><p id="browserText"></p></div>
-      <div><h3>Where it struggles</h3><p id="failText"></p></div>
+      <div><h3>What it can't do</h3><p>Your own photos are harder than the test set: CIFAR photos are centred, tightly framed and tiny, and a phone photo shrunk to 32×32 often isn't. It only knows ten kinds, so a photo of anything else still lands in one of the ten boxes.</p></div>
     </div>
 
     <details>
-      <summary>Show every number as a table</summary>
+      <summary>Every number as a table, with the full mix-up grid</summary>
       <div class="tablewrap"><table id="table"></table></div>
+      <div class="tablewrap"><table id="grid"></table></div>
     </details>
   </section>
 </div>
 
 <footer>
-  <div class="in">
-    <div><p>LOUPE · project 09 of Evan Wilson's AI project run</p><p><a href="https://github.com/evannwilsonn/loupe">github.com/evannwilsonn/loupe</a></p></div>
-    <div><p>CIFAR-10 by Alex Krizhevsky, Vinod Nair and Geoffrey Hinton (2009). Network trained with LibTorch, the PyTorch C++ API; the browser runs the same arithmetic in JavaScript with float16 weights. Set in Gloock, Hanken Grotesk, Share Tech Mono and Permanent Marker.</p></div>
+  <div class="wrap">
+    <div><p><b>Loupe</b>, project 09 of Evan Wilson's AI project run.</p><p><a href="https://github.com/evannwilsonn/loupe">github.com/evannwilsonn/loupe</a></p></div>
+    <div><p>CIFAR-10 by Alex Krizhevsky, Vinod Nair and Geoffrey Hinton (2009). Trained with LibTorch, the PyTorch C++ API; this page runs the same arithmetic in JavaScript with float16 weights. Set in Rokkitt, Overpass and Overpass Mono.</p></div>
   </div>
 </footer>
 <div class="tip" id="tip" role="tooltip"></div>
@@ -406,12 +391,13 @@ const CLASSES = ["airplane", "automobile", "bird", "cat", "deer", "dog", "frog",
 const $ = id => document.getElementById(id);
 const pct = (v, d = 1) => (v * 100).toFixed(d) + "%";
 const fmt = n => n.toLocaleString("en-US");
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/* Safelight (dark theme) */
+/* After hours (dark theme) */
 (function(){
   const root = document.documentElement, btn = $("theme");
   const dark = () => root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  const label = () => { btn.textContent = dark() ? "room light" : "safelight"; };
+  const label = () => { btn.textContent = dark() ? "office hours" : "after hours"; };
   try { const t = localStorage.getItem("loupe-theme"); if (t) root.dataset.theme = t; } catch (e) {}
   label();
   btn.addEventListener("click", () => {
@@ -420,9 +406,7 @@ const fmt = n => n.toLocaleString("en-US");
     label();
   });
 })();
-$("holesTop").innerHTML = "<i></i>".repeat(80);
 
-/* Pixels: CIFAR order (channel-major) to canvas RGBA */
 const hexBytes = h => Uint8Array.from({ length: h.length / 2 }, (_, i) => parseInt(h.substr(i * 2, 2), 16));
 function paint(canvas, chw){
   const ctx = canvas.getContext("2d"), img = ctx.createImageData(32, 32);
@@ -431,78 +415,106 @@ function paint(canvas, chw){
   }
   ctx.putImageData(img, 0, 0);
 }
-
-/* Grease-pencil marks, slightly different every time */
-function rnd(seed){ let s = seed * 9301 + 49297; return () => ((s = (s * 9301 + 49297) % 233280) / 233280); }
-function circlePath(seed){
-  const r = rnd(seed), pts = [];
-  const start = r() * Math.PI * 2, turns = 1.12 + r() * .1;
-  for (let i = 0; i <= 28; i++) {
-    const a = start + i / 28 * Math.PI * 2 * turns;
-    const rad = 41 + (r() - .5) * 3 + i * .12;
-    pts.push([50 + Math.cos(a) * rad * 1.04, 50 + Math.sin(a) * rad * .96]);
-  }
-  return "M" + pts.map(p => p.map(v => v.toFixed(1)).join(",")).join("L");
+function photoButton(bytes, label){
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "photo";
+  b.setAttribute("aria-label", label);
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 32;
+  paint(cv, bytes);
+  b.append(cv);
+  return b;
 }
-function crossPath(seed){
-  const r = rnd(seed), j = () => (r() - .5) * 6;
-  return `M${20 + j()},${20 + j()}L${80 + j()},${82 + j()}M${80 + j()},${18 + j()}L${22 + j()},${80 + j()}`;
-}
+for (const s of SAMPLES) s.bytes = hexBytes(s.pixels);
 
-/* The contact sheet */
-const byClass = CLASSES.map(() => []);
-for (const s of SAMPLES) byClass[s.label].push(s);
-const frames = [];
-byClass.forEach((items, c) => {
-  const strip = document.createElement("div");
-  strip.className = "strip";
-  const right = items.filter(s => s.top[0][0] === s.label).length;
-  strip.innerHTML = `<div class="tag"><b>${CLASSES[c]}</b><span>${right} of ${items.length} circled</span></div>`;
-  const row = document.createElement("div");
-  row.className = "frames";
-  items.forEach((s, i) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "frame";
-    const guess = s.top[0][0], ok = guess === s.label;
-    b.setAttribute("aria-label", `Test photo ${s.index}, a ${CLASSES[s.label]}; the network said ${CLASSES[guess]}`);
-    b.setAttribute("aria-pressed", "false");
-    const cv = document.createElement("canvas");
-    cv.width = cv.height = 32;
-    s.bytes = hexBytes(s.pixels);
-    paint(cv, s.bytes);
-    b.append(cv);
-    b.insertAdjacentHTML("beforeend", `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="${ok ? circlePath(s.index) : crossPath(s.index)}"/></svg>`);
-    if (!ok) b.insertAdjacentHTML("beforeend", `<span class="guess" aria-hidden="true">${CLASSES[guess]}?</span>`);
-    s.button = b;
-    b.addEventListener("click", () => select(s, b));
-    row.append(b);
-    frames.push(b);
-  });
-  strip.append(row);
-  $("sheet").append(strip);
+/* Column totals of the test confusion matrix: how pure each box is */
+const M = FINAL.test.confusion;
+const filedTo = CLASSES.map((_, p) => M.reduce((a, row) => a + row[p], 0));
+
+/* The cabinet: the samples the C++ model filed, by its first guess. The last two of each kind wait in the tray. */
+const perClass = CLASSES.map(() => []);
+for (const s of SAMPLES) perClass[s.label].push(s);
+const trayItems = [], filed = [];
+perClass.forEach(list => { filed.push(...list.slice(0, 10)); trayItems.push(...list.slice(10)); });
+const cubbies = CLASSES.map((name, c) => {
+  const el = document.createElement("div");
+  el.className = "cubby";
+  el.innerHTML = `<div class="holder"><b>${name}</b><span>${pct(M[c][c] / filedTo[c], 0)} pure</span></div><div class="inside"></div><div class="tally"></div>`;
+  $("cubbies").append(el);
+  return { el, inside: el.querySelector(".inside"), tally: el.querySelector(".tally"), right: 0, wrong: 0 };
 });
-
-/* The loupe */
-let net = null;
-function showRead(title, meta, probs, truth){
-  $("readTitle").innerHTML = title;
-  $("readMeta").textContent = meta;
-  const order = probs.map((p, k) => [p, k]).sort((a, b) => b[0] - a[0]).slice(0, 5);
-  $("probs").innerHTML = order.map(([p, k], i) => `<div class="prob${i === 0 ? " top" : ""}"><span>${CLASSES[k]}${k === truth ? " ✓" : ""}</span><span class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></span><span class="v">${pct(p)}</span></div>`).join("");
+function drop(c, bytes, truth, label, yours){
+  const box = cubbies[c];
+  const b = photoButton(bytes, label);
+  if (truth >= 0 && truth !== c) {
+    b.classList.add("wrong");
+    b.insertAdjacentHTML("beforeend", `<span class="tagged" aria-hidden="true">${CLASSES[truth]}</span>`);
+    box.wrong++;
+  } else if (truth === c) box.right++;
+  if (yours) b.classList.add("yours");
+  b.tabIndex = -1;
+  b.addEventListener("click", () => showBytes(bytes, truth, yours ? "your photo" : label));
+  box.inside.prepend(b);
+  box.tally.textContent = `${box.right + box.wrong} filed here${box.wrong ? `, ${box.wrong} tagged` : ""}`;
+  return b;
 }
-function read(bytes){
+for (const s of filed) drop(s.top[0][0], s.bytes, s.label, `Test photo ${s.index}, a ${CLASSES[s.label]}, filed under ${CLASSES[s.top[0][0]]}`, false);
+
+/* The tray */
+const shuffled = trayItems.map((s, i) => [((s.index * 2654435761) >>> 0) % 1000, s]).sort((a, b) => a[0] - b[0]).map(p => p[1]);
+const trayButtons = [];
+for (const s of shuffled) {
+  const b = photoButton(s.bytes, `Unsorted test photo ${s.index}`);
+  b.setAttribute("aria-pressed", "false");
+  b.addEventListener("click", () => post(s.bytes, s.label, `test photo ${s.index}`, b));
+  $("pile").append(b);
+  trayButtons.push(b);
+}
+
+/* Reading, slip and filing */
+let net = null;
+function readBytes(bytes){
   const t0 = performance.now();
   const probs = classify(net, bytes, FINAL.normalize, FINAL.flip);
   return { probs, ms: performance.now() - t0 };
 }
-function select(s, button){
-  for (const f of frames) f.setAttribute("aria-pressed", f === button ? "true" : "false");
-  paint($("lens"), s.bytes);
-  if (!net) return;
-  const { probs, ms } = read(s.bytes);
+function showBytes(bytes, truth, what){
+  paint($("big"), bytes);
+  if (!net) return null;
+  const { probs, ms } = readBytes(bytes);
   const best = probs.indexOf(Math.max(...probs));
-  showRead(`It reads <em>${CLASSES[best]}</em>`, `test photo ${s.index} · really a ${CLASSES[s.label]} · ${ms.toFixed(0)} ms in your browser`, probs, s.label);
+  $("slipTitle").innerHTML = `Filed under <span>${CLASSES[best]}</span>`;
+  $("slipMeta").textContent = `${what}${truth >= 0 ? ` · really: ${CLASSES[truth]}` : ""} · read in ${ms.toFixed(0)} ms`;
+  const order = probs.map((p, k) => [p, k]).sort((a, b) => b[0] - a[0]).slice(0, 5);
+  $("lines").innerHTML = order.map(([p, k], i) => `<div class="line${i ? "" : " first"}"><span style="white-space:nowrap">${CLASSES[k]}${k === truth ? " ✓" : ""}</span><span class="bar"><i style="width:${(p * 100).toFixed(1)}%"></i></span><span class="v">${pct(p)}</span></div>`).join("");
+  return best;
+}
+function fly(fromEl, toEl, bytes){
+  if (reduced) return;
+  const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+  const cv = document.createElement("canvas");
+  cv.width = cv.height = 32;
+  paint(cv, bytes);
+  cv.className = "flyer";
+  Object.assign(cv.style, { left: a.left + "px", top: a.top + "px", width: a.width + "px", height: a.height + "px" });
+  document.body.append(cv);
+  requestAnimationFrame(() => {
+    cv.style.transform = `translate(${b.left - a.left}px, ${b.top - a.top}px) scale(${b.width / a.width})`;
+    cv.style.opacity = ".2";
+  });
+  setTimeout(() => cv.remove(), 750);
+}
+function post(bytes, truth, what, trayButton){
+  for (const t of trayButtons) t.setAttribute("aria-pressed", t === trayButton ? "true" : "false");
+  const best = showBytes(bytes, truth, what);
+  if (best === null) return;
+  const placed = drop(best, bytes, truth, `${what}, filed under ${CLASSES[best]}`, truth < 0);
+  fly($("big"), placed, bytes);
+  const box = cubbies[best].el;
+  box.classList.add("hit");
+  setTimeout(() => box.classList.remove("hit"), 900);
+  if (trayButton) trayButton.disabled = true, trayButton.style.opacity = ".35";
 }
 
 $("file").addEventListener("change", e => {
@@ -513,15 +525,15 @@ $("file").addEventListener("change", e => {
     const side = Math.min(img.naturalWidth, img.naturalHeight);
     // Shrink in halving steps so the browser averages pixels instead of skipping them.
     let src = img, sx = (img.naturalWidth - side) / 2, sy = (img.naturalHeight - side) / 2, size = side;
-    let cv = document.createElement("canvas");
     while (size / 2 >= 32) {
       const next = document.createElement("canvas");
       next.width = next.height = Math.max(32, Math.floor(size / 2));
-      const ctx = next.getContext("2d");
-      ctx.imageSmoothingQuality = "high";
-      ctx.drawImage(src, sx, sy, size, size, 0, 0, next.width, next.height);
+      const c = next.getContext("2d");
+      c.imageSmoothingQuality = "high";
+      c.drawImage(src, sx, sy, size, size, 0, 0, next.width, next.height);
       src = next; sx = sy = 0; size = next.width;
     }
+    const cv = document.createElement("canvas");
     cv.width = cv.height = 32;
     const ctx = cv.getContext("2d");
     ctx.imageSmoothingQuality = "high";
@@ -529,11 +541,8 @@ $("file").addEventListener("change", e => {
     const rgba = ctx.getImageData(0, 0, 32, 32).data, chw = new Uint8Array(3072);
     for (let j = 0; j < 1024; j++) { chw[j] = rgba[j * 4]; chw[1024 + j] = rgba[j * 4 + 1]; chw[2048 + j] = rgba[j * 4 + 2]; }
     URL.revokeObjectURL(img.src);
-    for (const f of frames) f.setAttribute("aria-pressed", "false");
-    paint($("lens"), chw);
-    const { probs, ms } = read(chw);
-    const best = probs.indexOf(Math.max(...probs));
-    showRead(`It reads <em>${CLASSES[best]}</em>`, `your photo, at 32×32 · ${ms.toFixed(0)} ms in your browser`, probs, -1);
+    post(chw, -1, "your photo, at 32×32", null);
+    e.target.value = "";
   };
   img.src = URL.createObjectURL(file);
 });
@@ -544,59 +553,62 @@ async function boot(){
     const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const raw = await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
     net = layers(halfToFloat(new Uint16Array(raw)), FINAL.widths);
-    $("status").textContent = "Network loaded. It runs in your browser.";
-    const first = SAMPLES.find(s => s.label === 3 && s.top[0][0] === 3) || SAMPLES[0];
-    select(first, first.button);
+    $("status").textContent = "Network loaded. Reading happens in your browser.";
+    const first = shuffled[0];
+    showBytes(first.bytes, first.label, `test photo ${first.index} (not posted yet)`);
   } catch (e) {
     console.error(e);
-    $("status").textContent = "This browser could not load the network (it needs gzip streams). The marks on the sheet are from the C++ run.";
+    $("status").textContent = "This browser could not load the network (it needs gzip streams). The cabinet shows the C++ run.";
   }
 }
 
-/* Headline numbers */
+/* Tally counters */
 const runs = Object.fromEntries(RUNS.map(r => [r.name, r]));
 const finalRun = runs[FINAL.model];
-$("tAcc").textContent = pct(FINAL.test.accuracy);
-$("tParams").textContent = fmt(finalRun.parameters);
-$("tMin").textContent = `${Math.round(finalRun.minutes)} min`;
-
-/* The test strip: validation accuracy, method by method */
-(function ladder(){
-  const plain = runs.plain, aug = runs.augment;
+$("testLine").textContent = `${pct(FINAL.test.accuracy)} of 10,000 (95% interval ${pct(FINAL.test.low)} to ${pct(FINAL.test.high)})`;
+(function counters(){
   const rows = [
     ["Guess one kind", "always say airplane", BASE.majority.valid],
-    ["Nearest neighbours", `k = ${BASE.knn.k}, on raw pixels`, BASE.knn.valid],
+    ["Nearest neighbours", `k = ${BASE.knn.k}, raw pixels`, BASE.knn.valid],
     ["Softmax regression", "one linear layer on pixels", BASE.softmax.valid],
-    ["CNN", `${plain.epochs} epochs, photos as given`, plain.valid],
-    ["CNN, augmented", `${aug.epochs} epochs, shifted and mirrored`, aug.valid],
-    ["CNN, final", `${finalRun.epochs} epochs${FINAL.flip ? ", plus its mirror image" : ""}`, FINAL.flip ? FINAL.validFlip : FINAL.validPlain],
+    ["CNN", `${runs.plain.epochs} epochs, photos as given`, runs.plain.valid],
+    ["CNN, augmented", `${runs.augment.epochs} epochs, shifted and mirrored`, runs.augment.valid],
+    ["CNN, final", `${finalRun.epochs} epochs${FINAL.flip ? ", averaged with its mirror image" : ""}`, FINAL.flip ? FINAL.validFlip : FINAL.validPlain],
   ];
-  const max = 1;
-  $("ladder").innerHTML = rows.map(([name, sub, s], i) => `<div class="step${i === rows.length - 1 ? " best" : ""}"><span class="name">${name}<small>${sub}</small></span><span class="band" title="95% interval ${pct(s.low)} to ${pct(s.high)}"><i style="width:${s.accuracy / max * 100}%"></i><b style="left:${s.low * 100}%;width:${(s.high - s.low) * 100}%"></b></span><span class="acc">${pct(s.accuracy)}</span></div>`).join("");
-  $("scale").innerHTML = [0, .2, .4, .6, .8, 1].map(v => `<span style="left:${v * 100}%">${v * 100}%</span>`).join("");
+  const wheels = [];
+  $("counters").innerHTML = rows.map(([what, how, s], i) => {
+    const digits = (s.accuracy * 100).toFixed(1).padStart(4, "0");
+    const cells = [...digits].map(d => d === "." ? `<span class="dot">.</span>` : `<span class="wheel" data-d="${d}"><span>${Array.from({ length: 10 }, (_, k) => k).join("<br>")}</span></span>`).join("");
+    return `<div class="counter${i === rows.length - 1 ? " best" : ""}"><div class="what">${what}</div><div class="how">${how}</div><div class="wheels" role="img" aria-label="${pct(s.accuracy)}">${cells}<span class="pc">%</span></div><div class="ci">95% interval ${pct(s.low)} to ${pct(s.high)}</div></div>`;
+  }).join("");
+  const set = () => document.querySelectorAll(".wheel").forEach(w => { w.firstElementChild.style.transform = `translateY(${-44 * +w.dataset.d}px)`; });
+  if (reduced || !("IntersectionObserver" in window)) set();
+  else {
+    const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { set(); io.disconnect(); } }, { threshold: .3 });
+    io.observe($("counters"));
+  }
 })();
 
 /* Learning curves */
 (function curves(){
-  const series = [["plain", "var(--c-plain)"], ["augment", "var(--c-aug)"]].filter(([k]) => runs[k]);
+  const series = [["plain", "var(--c-plain)"], ["augment", "var(--c-aug)"]];
   const E = Math.max(...series.map(([k]) => runs[k].epochs));
-  const W = 640, H = 340, m = { l: 44, r: 16, t: 14, b: 40 };
-  const lo = 0.4, hi = 1;
+  const W = 640, H = 330, m = { l: 46, r: 16, t: 12, b: 40 }, lo = .4, hi = 1;
   const X = e => m.l + (e - 1) / (E - 1) * (W - m.l - m.r), Y = v => H - m.b - (v - lo) / (hi - lo) * (H - m.t - m.b);
   const ns = "http://www.w3.org/2000/svg";
   const el = (t, a, p) => { const e = document.createElementNS(ns, t); for (const k in a) e.setAttribute(k, a[k]); p && p.append(e); return e; };
   const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Accuracy by epoch, on held-out photos and on training photos, with and without augmentation" });
   const g = el("g", { class: "grid" }, svg);
-  for (let v = lo; v <= hi + 1e-9; v += 0.1) {
+  for (let v = lo; v <= hi + 1e-9; v += .1) {
     el("line", { x1: m.l, x2: W - m.r, y1: Y(v), y2: Y(v) }, g);
     el("text", { x: m.l - 8, y: Y(v) + 4, "text-anchor": "end" }, svg).textContent = Math.round(v * 100) + "%";
   }
-  for (let e = 1; e <= E; e += (E > 20 ? 5 : 2)) el("text", { x: X(e), y: H - m.b + 20, "text-anchor": "middle" }, svg).textContent = e;
+  for (let e = 1; e <= E; e += 2) el("text", { x: X(e), y: H - m.b + 20, "text-anchor": "middle" }, svg).textContent = e;
   el("text", { x: (m.l + W - m.r) / 2, y: H - 4, "text-anchor": "middle" }, svg).textContent = "epoch";
   const tip = $("tip");
   for (const [k, color] of series) {
     const c = runs[k].curve;
-    el("path", { d: "M" + c.map(p => `${X(p.epoch)},${Y(Math.max(lo, p.trainAccuracy))}`).join("L"), fill: "none", stroke: color, "stroke-width": 2, "stroke-dasharray": "4 4", opacity: .8 }, svg);
+    el("path", { d: "M" + c.map(p => `${X(p.epoch)},${Y(Math.max(lo, p.trainAccuracy))}`).join("L"), fill: "none", stroke: color, "stroke-width": 2, "stroke-dasharray": "4 4", opacity: .85 }, svg);
     el("path", { d: "M" + c.map(p => `${X(p.epoch)},${Y(Math.max(lo, p.validAccuracy))}`).join("L"), fill: "none", stroke: color, "stroke-width": 2.5 }, svg);
     for (const p of c) {
       const hit = el("circle", { class: "hit", cx: X(p.epoch), cy: Y(Math.max(lo, p.validAccuracy)), r: 10 }, svg);
@@ -604,43 +616,26 @@ $("tMin").textContent = `${Math.round(finalRun.minutes)} min`;
       hit.addEventListener("pointermove", e => { tip.style.left = Math.min(e.clientX + 14, innerWidth - 290) + "px"; tip.style.top = e.clientY + 14 + "px"; });
       hit.addEventListener("pointerleave", () => { tip.style.opacity = 0; });
     }
-    const lastP = c[c.length - 1];
-    el("circle", { cx: X(lastP.epoch), cy: Y(lastP.validAccuracy), r: 4.5, fill: color }, svg);
+    const last = c[c.length - 1];
+    el("circle", { cx: X(last.epoch), cy: Y(last.validAccuracy), r: 4.5, fill: color }, svg);
   }
   $("curves").append(svg);
-  const p = runs.plain, a = runs.augment;
-  if (p && a) {
-    const pl = p.curve[p.curve.length - 1], al = a.curve[a.curve.length - 1];
-    $("curveText").textContent = `Without augmentation the network ends up getting ${pct(pl.trainAccuracy)} of its own training photos right but only ${pct(pl.validAccuracy)} of held-out ones: it memorises. Shown each photo shifted up to four pixels and mirrored at random, it can't memorise exact pixels; training accuracy stays at ${pct(al.trainAccuracy)} and held-out accuracy rises to ${pct(al.validAccuracy)}, with the same network and the same ${a.epochs} epochs.`;
-  }
-  $("flipText").textContent = `For the final model, trained for ${finalRun.epochs} epochs, reading each photo and its mirror image and averaging the two scored ${pct(FINAL.validFlip.accuracy)} on held-out photos against ${pct(FINAL.validPlain.accuracy)} for one look, so the final model ${FINAL.flip ? "uses" : "doesn't use"} it. On the test set: ${pct(FINAL.test.accuracy)} (95% interval ${pct(FINAL.test.low)} to ${pct(FINAL.test.high)}).`;
+  const pl = runs.plain.curve.at(-1), al = runs.augment.curve.at(-1);
+  $("curveText").textContent = `Without augmentation the network ends up getting ${pct(pl.trainAccuracy)} of its own training photos right but only ${pct(pl.validAccuracy)} of held-out ones: it memorises. Shown each photo shifted up to four pixels and mirrored at random, it can't memorise exact pixels; training accuracy stays at ${pct(al.trainAccuracy)} and held-out accuracy rises to ${pct(al.validAccuracy)}, with the same network and the same ${runs.augment.epochs} epochs.`;
+  $("flipText").textContent = `The final model trained for ${finalRun.epochs} epochs (${Math.round(finalRun.minutes)} minutes on two cores). Reading each photo and its mirror image and averaging the two scored ${pct(FINAL.validFlip.accuracy)} on held-out photos against ${pct(FINAL.validPlain.accuracy)} for one look, so the final model ${FINAL.flip ? "does that" : "doesn't"}.`;
 })();
 
-/* Proof sheet: confusion matrix */
-(function matrix(){
-  const M = FINAL.test.confusion, el = $("matrix");
-  let html = `<span></span>` + CLASSES.map(c => `<span class="top">${c}</span>`).join("");
-  M.forEach((row, t) => {
-    const n = row.reduce((a, b) => a + b, 0);
-    html += `<span class="lab">${CLASSES[t]}</span>`;
-    row.forEach((v, p) => {
-      const share = v / n, a = Math.min(1, share * (t === p ? 1 : 4));
-      html += `<span class="cell${a > .55 ? " dark" : ""}" style="background:rgba(var(--heat),${a.toFixed(3)})" title="${CLASSES[t]} read as ${CLASSES[p]}: ${v} of ${n}">${v}</span>`;
-    });
-  });
-  el.innerHTML = html;
+/* Misfiled */
+(function misfiled(){
   const tm = FINAL.topMistakes;
-  $("matrixText").textContent = `Each row is 1,000 test photos of one kind. The diagonal is right answers; anything off it is a mix-up, shaded four times darker so small ones show. The most common: ${tm[0].count} ${CLASSES[tm[0].true]}s read as ${CLASSES[tm[0].predicted]}s and ${tm[1].count} ${CLASSES[tm[1].true]}s read as ${CLASSES[tm[1].predicted]}s. At 32 pixels, fur is fur.`;
-  const order = FINAL.perClass.map((v, k) => [v, k]).sort((a, b) => b[0] - a[0]);
-  $("perClass").innerHTML = `<thead><tr><th scope="col">Kind</th><th scope="col">Right</th></tr></thead><tbody>${order.map(([v, k]) => `<tr><td>${CLASSES[k]}</td><td>${pct(v)}</td></tr>`).join("")}</tbody>`;
+  $("misfiled").innerHTML = tm.map(t => `<li><b>${t.count}</b><span><em>${CLASSES[t.true]}s</em> filed under ${CLASSES[t.predicted]}</span></li>`).join("");
+  const worst = FINAL.perClass.indexOf(Math.min(...FINAL.perClass)), bestK = FINAL.perClass.indexOf(Math.max(...FINAL.perClass));
+  $("misText").textContent = `Counted over the 10,000 test photos. Cats and dogs swap most: at 32 pixels, fur is fur. Birds and deer share green backgrounds; airplanes and ships share blue ones. Best filed: ${CLASSES[bestK]} (${pct(FINAL.perClass[bestK])} of them in the right box). Worst: ${CLASSES[worst]} (${pct(FINAL.perClass[worst])}). The percentage on each box's brass label is how many of the photos filed there belong there.`;
 })();
+$("browserText").textContent = `This page runs the network in plain JavaScript, with BatchNorm folded into the convolutions and weights stored as float16 (about 560 KB). On the first ${fmt(BROWSER.images)} test photos it files every one in the same box as LibTorch (${fmt(BROWSER.sameClass)} of ${fmt(BROWSER.images)}); the largest difference in any score is ${BROWSER.maxLogitDifference}.`;
 
-/* Notes */
-$("browserText").textContent = `This page runs the network in plain JavaScript, with BatchNorm folded into the convolutions and weights stored as float16 (about 560 KB). On the first ${fmt(BROWSER.images)} test photos it picks the same class as LibTorch ${fmt(BROWSER.sameClass)} times out of ${fmt(BROWSER.images)}; the largest difference in any score is ${BROWSER.maxLogitDifference}. One look takes about ${Math.round(BROWSER.msPerImage)} ms in Node.`;
-$("failText").textContent = `Weakest kinds: ${CLASSES[FINAL.perClass.indexOf(Math.min(...FINAL.perClass))]} (${pct(Math.min(...FINAL.perClass))}). Your own photos are harder than the test set: CIFAR photos are centred, tightly framed and tiny, and a phone photo shrunk to 32×32 often isn't. It also only knows ten kinds, so a photo of anything else still gets one of them.`;
-
-/* Table */
-(function table(){
+/* Tables */
+(function tables(){
   const rows = [
     ["Guess one kind", BASE.majority.valid, BASE.majority.test],
     [`Nearest neighbours (k = ${BASE.knn.k})`, BASE.knn.valid, BASE.knn.test],
@@ -648,10 +643,11 @@ $("failText").textContent = `Weakest kinds: ${CLASSES[FINAL.perClass.indexOf(Mat
     [`CNN, ${runs.plain.epochs} epochs`, runs.plain.valid, null],
     [`CNN, augmented, ${runs.augment.epochs} epochs`, runs.augment.valid, null],
     [`CNN, final, ${finalRun.epochs} epochs, one look`, FINAL.validPlain, FINAL.testPlain],
-    [`CNN, final, with its mirror image`, FINAL.validFlip, FINAL.flip ? FINAL.test : null],
+    ["CNN, final, with its mirror image", FINAL.validFlip, FINAL.flip ? FINAL.test : null],
   ];
-  const cell = s => s ? `${pct(s.accuracy)} <span style="color:var(--faint)">(${pct(s.low)}–${pct(s.high)})</span>` : "–";
+  const cell = s => s ? `${pct(s.accuracy)} (${pct(s.low)}–${pct(s.high)})` : "–";
   $("table").innerHTML = `<thead><tr><th scope="col">Method</th><th scope="col">Held-out (5,000)</th><th scope="col">Test (10,000)</th></tr></thead><tbody>${rows.map(([n, v, t]) => `<tr><td>${n}</td><td>${cell(v)}</td><td>${cell(t)}</td></tr>`).join("")}</tbody>`;
+  $("grid").innerHTML = `<caption style="text-align:left;padding:18px 0 6px;font:600 14px var(--mono);color:var(--soft)">Test photos: rows are what the photo is, columns the box it was filed in</caption><thead><tr><th scope="col"></th>${CLASSES.map(c => `<th scope="col">${c.slice(0, 5)}</th>`).join("")}</tr></thead><tbody>${M.map((row, t) => `<tr><th scope="row" style="text-align:left">${CLASSES[t]}</th>${row.map((v, p) => `<td${t === p ? ' style="font-weight:700"' : ""}>${v}</td>`).join("")}</tr>`).join("")}</tbody>`;
 })();
 
 boot();

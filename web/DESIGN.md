@@ -1,42 +1,35 @@
 # Loupe demo: design notes
 
-The page is **a darkroom light table**. Test photos lie on it as a contact sheet of film strips, marked up with a red grease pencil the way a photographer marks a sheet:
-- a **circle** means the network got the photo right;
-- a **cross**, with its wrong guess written under the frame, means it didn't.
+The page is **a mail-sorting cabinet**. Photos are posts, the network is the clerk, and the ten classes are ten wooden pigeonholes with brass label holders.
 
-A **loupe**, a round magnifier with a dark rim, shows any frame enlarged with every pixel visible, next to the network's reading of it.
-
-## Layout
-
-- **Film edge:** a black band across the top with sprocket holes and amber edge print, which carries the navigation.
-- **Intro:** a large serif question ("What's in the frame?") and three grease-pencil figures.
-- **Bench:**
-  - On the left, the contact sheet: ten strips, one per class, with twelve frames each.
-  - On the right, the loupe, sticky on wide screens.
-  - Below 1000px the loupe sits under the sheet. On phones each strip scrolls sideways inside itself, and the page never scrolls sideways.
-- **Test strip:** the accuracy ladder as horizontal bands, one per method, with a thin line for the 95% interval. The final model's band is grease red.
-- **Learning curves:** accuracy on held-out photos (solid) and on training photos (dashed) per epoch. Orange is training without augmentation, blue is with it.
-- **Proof sheet:** the confusion matrix as a grid of cells in one hue. Mistakes are shaded four times darker so they show, and the text says so.
-- **Footer:** another strip of film edge.
+- **Out tray:** a dark oak tray holding twenty unsorted test photos, plus a brass "Post your own photo" button.
+- **Reading slip:** a perforated paper slip. It shows the photo enlarged, with every pixel as a square, and the clerk's top five readings as a printed tally.
+- **Cabinet:** two rows of five pigeonholes.
+  - Each one holds the test photos the model filed there.
+  - A photo in the wrong box gets a red tag naming what it really is.
+  - Each brass label gives the box's purity on the full test set: the share of photos filed there that belong there, i.e. the confusion-matrix column.
+  - When you post a photo, it flies from the slip into its box, and the box lights up.
+- **The day's tally:** each method's held-out accuracy on mechanical counter wheels. The wheels roll into place once, when scrolled into view (not with reduced motion), and each counter shows its 95% interval. The final model's counter has a red frame.
+- **Learning curves:** accuracy on held-out photos (solid) and on training photos (dashed) per epoch. Orange is without augmentation, blue is with it.
+- **Misfiled most often:** the top confusions as a ledger list ("99 cats filed under dog"). The full grid is in a `<details>` table.
 
 ## Tokens (defined at the top of `template.html`)
 
-- **Room light (light theme):** a cool grey-white table (`#eef0ec`), near-black film (`#17181a`), amber edge print (`#e3a33b`) and grease red (`#d0261c`).
-- **Safelight (dark theme):** a warm black table under a red safelight (`#17110f`), with rose-cream text and a brighter grease red. It has its own steps, not an inverted light theme.
-- **Chart colours:**
-  - Room light: orange `#c2410c` and blue `#1769aa`.
-  - Safelight: orange `#e0662d` and blue `#4b97de`.
-  - All four pass the dataviz palette check against their background, and the training and held-out lines also differ in dash pattern.
+- **Office hours (light theme):**
+  - Plaster wall `#e9e1d0` and oak `#a8743f`, with darker oak frames.
+  - Near-black pigeonhole interiors `#3a2614`.
+  - Brass labels `#c9a24a` and paper slips `#f8f3e6`.
+  - Tag red `#c22f1f` is the one accent.
+- **After hours (dark theme):** dark walnut and a dim wall, with its own steps rather than an inverted light theme.
+- **Chart colours:** orange `#c2410c` and blue `#1769aa` (light), `#e0662d` and `#4b97de` (dark). All four pass the dataviz palette check against the slip colour, and line dashes separate training from held-out accuracy.
 - **Type:**
-  - Gloock for display.
-  - Hanken Grotesk for reading.
-  - Share Tech Mono for edge print, numbers and charts.
-  - Permanent Marker only for grease-pencil writing.
+  - Rokkitt, a slab serif, for headings and labels: stencilled, office-furniture lettering.
+  - Overpass for reading.
+  - Overpass Mono for numbers, slips and counters.
 
 ## Things to avoid
 
-- Card shadows, except the loupe's lens.
-- Gradients.
 - A third accent colour.
-- Turning the contact sheet into a generic image grid with rounded cards.
-- Any film manufacturer's name or edge print.
+- Generic rounded cards.
+- Gradients other than the slip's perforated edge.
+- Making the cabinet a plain image grid. The boxes, brass labels and red tags are the point.
